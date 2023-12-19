@@ -15,13 +15,15 @@
         private readonly IList<Project> _projects;
         private readonly int _maxGlobalThreads;
         private readonly ISystemResourceMonitor _systemResourceMonitor;
+        private readonly string _pathToExecuredProdject;
 
-        public ResourceManager(IList<Project> projects, int maxGlobalThreads, ISystemResourceMonitor systemResourceMonitor)
+        public ResourceManager(IList<Project> projects, int maxGlobalThreads, ISystemResourceMonitor systemResourceMonitor,string pathToExecuredProdject)
         {
 
             _projects = projects;
             _maxGlobalThreads = maxGlobalThreads;
             _systemResourceMonitor = systemResourceMonitor;
+            _pathToExecuredProdject = pathToExecuredProdject;
         }
 
         public async Task ExecuteAllProjectsAsync(int maxExecuteTimeInSeconds, string pathForExecutedProject )
@@ -47,7 +49,7 @@
                 await globalSemaphore.WaitAsync();
                 try
                 {
-                    while (/*_systemResourceMonitor.GetTotalCpuUsage() > 95 || */_systemResourceMonitor.GetFreeMemoryInPercentage() < 5)
+                    while (_systemResourceMonitor.GetFreeMemoryInPercentage() < 5)
                     {
                         Thread.Sleep(100); // Delay to wait for resources to free up
                     }
@@ -71,26 +73,6 @@
 
             await Task.WhenAll(tasks);
         }
-        
-        //private static void LaunchProject(Project project)
-        //{
-        //    // Получаем общую потребляемую память всеми запущенными процессами.
-        //    double totalMemory = 0;
-        //    foreach (Process process in Process.GetProcesses())
-        //    {
-        //        totalMemory += process.PrivateMemorySize64;
-        //    }
-
-        //    // Если потребляемая память превышает доступное количество памяти,
-        //    // останавливаем проект.
-        //    if (totalMemory + project.MemoryCount > AvailableMemory)
-        //    {
-        //        return;
-        //    }
-
-        //    // Запускаем консольное приложение.
-        //    Process.Start("myapp.exe", project.Args);
-        //}
 
         public async Task StartConsoleAppAsync(int memoryCount, int appTimeout)
         {
@@ -98,7 +80,7 @@
             {
                 StartInfo = new ProcessStartInfo
                 {
-                    FileName = "D:\\temp\\ZennoLab\\ZennoLab.Miner\\bin\\Release\\net8.0\\publish\\ZennoLab.Miner.exe",
+                    FileName = _pathToExecuredProdject,
                     Arguments = $"{memoryCount} {appTimeout}",
                     UseShellExecute = true,
                     CreateNoWindow = true
